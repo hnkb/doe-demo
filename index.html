@@ -1,0 +1,492 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>بانک اطلاعات پسماند (دمو)</title>
+    <link href="app.css" rel="stylesheet"/>
+</head>
+<body>
+
+    <div class="loading-curtain" style="position:fixed; top:0; bottom: 0; left:0; right: 0; text-align: center; z-index: 10000; background: #f2f2f2">
+        <svg height="100" width="200" style="margin-top: 50vh; transform: translate(0, -50%); -webkit-transform: translate(0, -50%)"></svg>
+    </div>
+    <script src="js/d3.min.js"></script>
+    <script>
+        (function () {
+            d3.select('.loading-curtain svg').selectAll('circle').data([1, 2, 3]).enter().append('circle')
+                .attr('r', 20).attr('cy', 50).attr('cx', function (d) { return d * 50 }).style('fill', '#eee')
+                .transition().duration(800).delay(function (d, i) { return i * 200 }).each(flicker);
+            function flicker() {
+                var circle = d3.select(this);
+                (function repeat() { circle = circle.transition().style('fill', '#78a900').attr('r', 10).transition().style('fill', '#eee').attr('r', 16).each("end", repeat); })();
+            }
+        })();
+    </script>
+
+    <!-- ko with: header -->
+    <header>
+    <h1><a href="#">بانک اطلاعاتی پسماند استان</a></h1>
+    <nav>
+        <ul>
+
+            <li class="city">
+                <a href="#" data-bind="css: { on: cityPopup }, click: cityDisplayPopup">
+                    <label>شهر</label>
+                    <span data-bind="text: (cityFilter() && cityFilter().name()) || 'همه'"></span>
+                </a>
+                <div class="popup" data-bind="visible: cityPopup">
+                    <svg version="1.1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" class="close" data-bind="click: function() { cityPopup(false) }">
+                        <circle fill="none" stroke-width="6" stroke-miterlimit="10" cx="50" cy="50" r="47" />
+                        <line fill="none" stroke-width="6" stroke-miterlimit="10" x1="71.214" y1="71.213" x2="28.787" y2="28.787" />
+                        <line fill="none" stroke-width="6" stroke-miterlimit="10" x1="28.787" y1="71.213" x2="71.214" y2="28.787" />
+                    </svg>
+
+                    <ul>
+                        <!-- ko foreach: cities -->
+                        <li data-bind="text: city.name, css: { on: on }, click: $parent.cityClick, event: { mouseover: function() { on(true) }, mouseout: function() { on(false) } }"></li>
+                        <!-- /ko -->
+                        <li class="default" data-bind="click: cityClick, event: { mouseover: function() { cities().forEach(function (d) { d.on(true) }) }, mouseout: function() { cities().forEach(function (d) { d.on(false) }) }   }">همه‌ی شهرها</li>
+                    </ul>
+
+                    <svg version="1.1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 470 569">
+                        <path class="border" d=" M 142.11 99.07 C 153.65 108.56 155.43 81.48 168.15 89.36 C 182.59 101.75 205.41 83.30 217.71 100.32 C 218.94 108.57 224.86 101.62 224.28 96.19 C 231.27 95.75 236.05 101.19 239.39 106.61 C 245.21 112.80 252.97 102.91 259.50 106.92 C 274.73 113.15 288.66 115.48 304.97 119.98 C 310.50 127.29 324.70 146.61 330.33 129.34 C 334.39 127.47 340.11 129.93 344.90 129.25 C 341.57 134.01 329.89 125.38 330.38 135.37 C 328.42 139.10 317.84 137.54 322.05 143.85 C 330.13 162.80 351.20 171.15 358.74 190.18 C 364.72 196.32 373.66 201.75 373.61 211.51 C 372.37 238.27 403.73 248.29 415.29 268.63 C 421.11 274.87 416.41 284.21 420.86 290.99 C 424.14 293.90 429.98 296.08 428.51 301.50 C 426.65 308.31 438.63 309.05 436.73 315.56 C 435.17 319.21 429.34 317.64 427.31 321.12 C 431.20 327.40 421.00 329.37 418.03 332.98 C 420.48 342.82 433.38 346.13 440.64 339.62 C 444.62 335.20 450.12 341.01 452.39 344.74 C 449.37 343.29 446.75 340.57 443.35 340.21 C 435.05 348.27 420.55 345.88 415.89 334.86 C 408.19 338.93 411.91 348.54 417.29 353.02 C 413.52 361.29 401.62 353.36 398.69 362.69 C 392.50 372.58 378.07 364.64 370.17 370.46 C 373.63 383.09 379.92 404.14 362.89 410.08 C 356.65 414.74 370.94 414.24 368.60 419.77 C 366.47 426.46 375.49 426.83 379.24 429.78 C 387.43 435.48 394.71 424.55 400.89 420.82 C 407.33 424.33 405.89 433.30 406.21 439.50 C 405.37 446.77 414.93 453.01 421.41 449.43 C 428.67 445.94 429.40 454.38 429.83 458.82 C 435.44 464.34 446.91 466.16 446.15 476.26 C 441.28 484.05 432.13 482.64 424.54 481.72 C 426.30 490.82 434.58 496.64 440.82 502.67 C 441.94 515.20 432.05 532.94 446.18 540.35 C 448.78 544.53 444.15 549.17 443.14 553.32 C 440.17 548.91 450.69 542.17 442.53 539.43 C 426.71 536.56 410.61 530.42 398.89 518.95 C 393.34 523.90 391.73 532.07 385.79 536.92 C 379.93 544.73 394.66 548.02 392.61 555.43 C 389.53 559.96 385.06 563.57 383.34 569.00 L 381.50 569.00 C 384.02 563.32 388.31 558.88 392.01 554.02 C 387.32 548.19 381.69 542.95 383.11 534.67 C 376.37 525.75 361.90 525.88 353.00 532.03 C 341.60 542.02 326.59 546.32 315.08 556.16 C 309.43 560.73 304.75 553.53 301.13 549.66 C 301.62 545.03 307.00 539.21 300.72 536.20 C 290.91 527.83 278.27 533.73 267.17 534.88 C 270.03 528.83 266.07 523.25 266.73 517.11 C 265.38 521.77 256.02 516.92 261.99 517.10 C 271.57 511.29 267.60 530.92 269.02 533.84 C 280.52 530.05 302.55 526.16 304.45 542.61 C 300.42 548.60 305.72 554.19 310.89 556.81 C 324.33 546.97 340.22 540.80 353.21 530.21 C 363.92 524.26 377.21 525.35 385.93 534.19 C 390.34 528.22 393.26 521.37 397.13 515.08 C 408.92 524.16 422.21 533.29 437.14 535.76 C 435.97 524.92 438.12 514.28 438.75 503.55 C 432.37 496.79 420.76 490.43 422.65 479.57 C 429.70 478.53 440.09 482.64 444.01 474.66 C 442.93 464.74 426.12 465.88 427.00 454.95 C 425.89 445.15 414.59 459.58 410.57 450.48 C 397.01 446.49 409.85 429.80 400.26 424.00 C 393.58 432.48 381.51 437.58 372.11 428.92 C 362.90 428.32 370.10 416.28 360.74 416.30 C 351.78 407.73 371.34 407.77 371.27 398.90 C 376.52 388.31 363.84 377.33 369.69 367.59 C 378.73 362.71 395.48 370.54 399.29 357.31 C 401.65 350.79 409.22 356.86 414.05 354.13 C 412.65 349.85 409.02 346.46 408.28 341.99 C 409.96 331.90 424.27 330.99 425.33 320.97 C 424.37 313.32 441.15 317.31 432.20 311.03 C 426.05 309.00 426.46 303.00 425.66 297.84 C 411.67 292.04 420.29 274.01 410.14 264.91 C 397.55 250.70 380.12 239.80 371.64 222.28 C 372.89 210.71 369.62 199.03 358.30 193.66 C 349.31 171.56 322.31 161.36 317.93 136.78 C 308.73 132.76 306.72 119.04 295.47 119.39 C 278.11 120.72 262.99 104.86 245.59 110.39 C 235.17 113.57 235.46 97.77 225.67 98.96 C 227.84 104.94 217.41 112.37 216.15 103.02 C 209.26 88.73 191.91 98.90 180.20 96.09 C 173.20 96.61 168.51 89.71 161.57 90.12 C 155.67 94.69 152.25 107.81 142.94 102.39 C 141.24 106.85 141.28 112.93 135.98 114.94 C 126.82 119.21 137.92 129.72 135.14 136.39 C 130.62 138.89 122.61 137.31 119.41 140.85 C 123.93 146.34 120.66 149.86 113.37 146.94 C 114.32 152.50 116.24 159.70 123.32 157.41 C 128.91 165.41 124.47 176.76 127.88 185.84 C 120.20 187.22 117.55 193.35 116.80 200.38 C 104.79 212.79 92.54 225.42 75.31 230.07 C 78.55 235.89 78.00 242.76 79.98 248.88 C 83.25 249.92 96.02 255.33 88.30 258.48 C 88.00 264.82 97.71 267.25 96.65 273.49 C 89.33 286.54 82.69 300.02 76.89 313.83 C 62.60 336.57 68.01 365.17 64.96 390.66 C 80.53 395.20 97.77 390.88 113.13 394.68 C 108.14 420.04 109.53 448.14 108.60 474.49 C 114.75 480.37 130.01 481.96 125.99 493.80 C 134.32 487.28 122.59 502.43 133.60 499.12 C 133.29 497.56 132.82 496.04 132.37 494.53 C 141.52 501.25 146.56 511.75 154.76 519.44 C 160.12 524.79 144.67 529.41 154.00 533.89 C 164.36 538.50 151.67 546.20 159.23 552.66 C 165.24 559.76 175.42 553.92 182.51 558.46 C 187.72 560.40 188.04 553.13 190.08 550.10 C 198.52 539.54 213.08 553.69 223.01 546.66 C 224.67 534.99 230.66 520.85 219.57 511.40 C 210.91 502.56 222.56 485.61 234.27 489.72 C 233.36 485.67 238.44 486.75 240.91 485.64 C 237.76 481.83 231.65 482.69 227.05 482.86 C 230.51 474.84 244.65 471.87 249.45 479.92 C 249.81 471.53 259.21 482.45 263.17 478.03 C 268.46 472.17 267.46 486.05 270.56 486.53 C 272.53 485.02 274.36 481.29 276.17 485.01 C 280.05 493.18 260.84 496.96 268.56 504.58 C 268.46 507.86 264.24 510.07 263.00 505.11 C 259.34 496.75 251.30 504.37 245.00 502.01 C 243.98 494.22 235.09 494.43 229.11 492.98 C 238.99 491.79 230.39 488.99 227.00 491.15 C 231.39 508.18 252.76 511.88 261.96 522.86 C 247.85 514.89 231.72 507.26 225.21 491.26 C 220.95 496.10 212.91 504.46 220.71 510.14 C 230.56 520.34 226.79 536.21 223.98 548.26 C 212.36 553.78 190.94 539.16 187.70 558.79 C 178.59 558.41 165.36 554.70 165.65 569.00 L 164.73 569.00 C 166.17 565.84 162.48 558.06 168.71 560.14 C 161.17 556.93 147.16 545.77 155.49 539.39 C 149.47 534.36 145.85 528.55 152.78 522.79 C 145.83 511.71 137.80 499.31 123.13 499.35 C 128.74 485.31 113.44 481.99 105.28 474.79 C 108.74 448.67 105.28 422.07 109.88 396.05 C 94.24 395.07 77.35 396.48 62.54 392.33 C 63.43 371.14 63.69 348.63 67.18 327.29 C 76.26 309.04 84.72 290.31 93.94 272.19 C 84.97 266.25 89.13 252.04 77.77 251.21 C 74.28 245.12 78.37 235.59 70.99 232.17 C 64.78 228.76 66.89 218.81 58.86 216.96 C 52.40 213.79 59.62 207.98 63.47 206.32 C 62.44 209.70 56.77 211.14 57.47 214.49 C 64.48 216.79 67.55 222.90 68.92 229.55 C 90.97 224.73 111.27 208.17 118.26 187.47 C 130.96 184.56 121.07 167.77 122.26 158.81 C 113.18 169.69 102.39 142.94 117.31 144.58 C 116.94 137.11 114.58 129.81 109.86 123.94 C 115.24 126.32 115.89 132.68 119.37 136.76 C 123.39 136.05 127.42 135.28 131.53 135.84 C 132.00 129.26 129.13 122.76 130.59 116.26 C 137.50 112.84 140.01 105.98 142.11 99.07 M 274.09 486.28 C 272.54 489.26 277.41 486.43 274.09 486.28 M 261.28 501.09 C 261.43 504.41 264.26 499.54 261.28 501.09 M 265.09 503.28 C 263.54 506.26 268.41 503.43 265.09 503.28 Z" />
+                        <!-- ko foreach: cities -->
+                        <path data-bind="attr: { d: city.path, class: on() ? 'city on':'city' }, click: $parent.cityClick, event: { mouseover: function() { on(true) }, mouseout: function() { on(false) } }" />
+                        <!-- /ko -->
+                    </svg>
+                </div>
+            </li>
+
+            <li class="pollutant">
+                <a data-bind="css: { on: pollutantPopup }, click: pollutantDisplayPopup">
+                    <label>جنس پسماند</label>
+                    <span data-bind="text: (pollutantFilter() && pollutantFilter().name()) || 'همه'"></span>
+                </a>
+                <div class="popup" data-bind="visible: pollutantPopup">
+                    <svg version="1.1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" class="close" data-bind="click: function() { pollutantPopup(false) }">
+                        <circle fill="none" stroke-width="6" stroke-miterlimit="10" cx="50" cy="50" r="47" />
+                        <line fill="none" stroke-width="6" stroke-miterlimit="10" x1="71.214" y1="71.213" x2="28.787" y2="28.787" />
+                        <line fill="none" stroke-width="6" stroke-miterlimit="10" x1="28.787" y1="71.213" x2="71.214" y2="28.787" />
+                    </svg>
+
+                    <ul>
+                        <!-- ko foreach: pollutants -->
+                        <li class="tree">
+                            <p data-bind="click: $parent.pollutantClick" onmouseover="this.parentNode.className = 'tree on'" onmouseout="this.parentNode.className = 'tree'">
+                                <span class="color-id" data-bind="style: { background: color }"></span>
+                                <span data-bind="text: name"></span>
+                            </p>
+                            <table>
+                                <tr data-bind="foreach: children">
+                                    <td data-bind="click: $root.header.pollutantClick, text: name"></td>
+                                </tr>
+                            </table>
+                        </li>
+                        <!-- /ko -->
+                        <li class="default" data-bind="click: pollutantClick">همه‌ی پسماندها</li>
+                    </ul>
+                </div>
+            </li>
+            
+            <li class="usage">
+                <a data-bind="css: { on: usagePopup }, click: usageDisplayPopup">
+                    <label>نوع کاربری</label>
+                    <span data-bind="text: (usageFilter() && usageFilter().name()) || 'همه'"></span>
+                </a>
+                <div class="popup" data-bind="visible: usagePopup">
+                    <svg version="1.1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" class="close" data-bind="click: function() { usagePopup(false) }">
+                        <circle fill="none" stroke-width="6" stroke-miterlimit="10" cx="50" cy="50" r="47" />
+                        <line fill="none" stroke-width="6" stroke-miterlimit="10" x1="71.214" y1="71.213" x2="28.787" y2="28.787" />
+                        <line fill="none" stroke-width="6" stroke-miterlimit="10" x1="28.787" y1="71.213" x2="71.214" y2="28.787" />
+                    </svg>
+
+                    <ul>
+                        <!-- ko foreach: usages -->
+                        <li data-bind="click: $parent.usageClick, html: icon() + '<span>' + name() + '</span>'"></li>
+                        <!-- /ko -->
+                        <li class="default" data-bind="click: usageClick">همه‌ی کاربری‌ها</li>
+                    </ul>
+                </div>
+            </li>
+
+        </ul>
+        <div class="search" data-bind="css: { on: searchActive }">
+            <input type="search" placeholder="جستجو" data-bind="value: searchQuery, valueUpdate: 'input', event: { 'focus': function() { searchActive(true) }, 'blur': function() { setTimeout(function() { searchActive(false) }, 100) } }" />
+            <svg viewBox="0 0 115 116" version="1.1" xmlns="http://www.w3.org/2000/svg">
+                <path d="M 78.37,0 71.59,0 C 61.33,1.13 51.41,5.74 44.63,13.63 34.97,24.36 31.99,40.52 37.07,54.02 c 1.55,4.39 4.18,8.27 6.87,12.03 -3.54,3.75 -7.21,7.37 -10.95,10.92 -1.94,1.87 -5.27,-0.44 -7.03,1.94 C 17.31,87.65 8.32,96.09 0,105.15 l 0,2.46 c 2.66,2.96 5.52,5.72 8.47,8.39 l 2.96,0 c 8.72,-9.28 18.1,-17.92 26.89,-27.13 0.13,-2.16 -0.85,-4.89 1.16,-6.45 3.48,-3.53 7.02,-6.99 10.56,-10.44 7.26,5.13 15.97,8.48 24.95,8.28 12.94,0.03 25.69,-6.63 32.9,-17.4 4.15,-5.68 6.13,-12.57 7.11,-19.46 l 0,-6.78 C 113.82,27.86 110.42,19.25 104.14,12.89 97.59,5.44 88.08,1.28 78.37,0 m 4.32,9.35 c 13.24,3.33 23.65,15.92 23.87,29.66 C 107.1,50.03 101.24,61.1 91.89,66.93 84.44,71.79 74.9,73.11 66.35,70.78 56.34,68.02 47.84,60.11 44.65,50.2 40.24,37.59 44.95,22.58 55.73,14.73 63.27,8.92 73.5,7.03 82.69,9.35 z" />
+            </svg>
+            <ul data-bind="foreach: searchResults">
+                <li><a data-bind="text: name, attr: { href: '#place=' + id }"></a></li>
+            </ul>
+        </div>
+    </nav>
+</header>
+
+    <!-- /ko -->
+
+    <div class="frame" data-bind="smoothZoom: activePage">
+        <div class="canvas">
+
+            <div class="page home">
+                <!-- ko with: home -->
+                <div class="content">
+    
+    <div class="panel city">
+        <a href="#city=ahvaz&view=map">
+            <span class="value">۱۳۰۹ <span>تن</span></span>
+            <span>تولید پسماند در اهواز</span>
+        </a>
+    </div>
+
+    <div class="panel help filter">
+        <svg version="1.1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" style="fill: #777; position: absolute; height: 64px; width: 64px; top: -10px; left: 30%;">
+            <path d="M 64.84375 8.9375 C 63.954564 8.9700662 63.371061 9.3911525 62.65625 9.65625 C 51.72508 8.1886425 40.892866 12.197348 31.1875 12.75 C 30.600032 13.603547 29.793442 14.058522 30.75 14.53125 C 29.221377 14.924332 27.513222 15.078567 26.21875 15.78125 C 25.886858 19.307376 29.23658 18.834636 31.625 18.625 C 34.874782 18.336474 39.033568 18.720448 42.96875 17.9375 C 47.367183 17.064144 51.689924 15.60513 55.34375 15.71875 C 53.144425 17.536352 49.83572 20.302725 48.8125 22.09375 C 48.805424 21.842318 48.633702 21.928557 48.4375 22.03125 C 43.579866 27.645839 37.842472 33.382545 34.21875 40.21875 C 33.005023 42.503063 32.361917 45.007742 31.3125 47.53125 C 30.774766 48.835101 29.401351 50.198568 30.125 51.53125 C 29.230236 52.22144 28.717784 54.686113 28.4375 56.0625 C 27.643028 59.984095 27.275416 64.055433 27.4375 67.78125 C 27.661153 73.094081 29.735697 77.234646 31.46875 81.875 C 33.68042 83.670276 34.465471 85.499891 36.4375 88.1875 C 37.499981 89.63849 38.947725 92.020998 40 92.4375 C 40.196619 92.518654 42.414055 92.416334 42.46875 90.90625 C 42.51399 89.67153 40.018179 88.859555 39 87.71875 C 36.842897 85.290912 35.3477 81.469442 33.3125 77.75 C 28.671451 69.291776 30.247807 59.561677 34.25 50.21875 C 39.358524 38.299724 44.389998 29.622336 53.09375 22.875 C 51.280681 24.911489 51.924832 30.797643 55.3125 29.21875 C 55.055001 27.968748 53.958385 27.594935 53.84375 26.3125 C 53.715547 24.881733 54.745481 23.618032 54.6875 21.875 C 56.192485 20.974692 60.040144 20.670404 58.71875 18.28125 C 60.203531 17.344778 61.688971 16.386389 63.09375 15.34375 C 64.998296 14.933822 68.357224 15.60927 69.625 16.28125 C 65.864422 22.726604 62.357338 33.079294 59.65625 41.3125 C 58.640896 44.405289 58.102459 47.667948 56.9375 50.28125 C 56.583014 51.071607 55.528255 51.818463 55.53125 52.78125 C 55.52986 54.393749 56.932774 54.77938 58.40625 54.65625 C 63.924813 43.03923 71.397436 30.607966 74.15625 16.71875 C 75.423202 10.356155 71.364116 11.194833 68.125 9.1875 C 66.897027 9.3532119 65.695254 10.229581 64.84375 8.9375 z M 58.28125 11.40625 C 58.90704 11.396962 59.523946 11.393349 60.125 11.40625 C 55.267975 13.445125 49.467273 13.234106 43.40625 13.40625 C 43.629363 12.429758 44.796058 12.830221 45.5625 12.6875 C 49.030983 12.036888 53.90072 11.471268 58.28125 11.40625 z M 69.875 13.09375 C 70.426158 13.055711 71.028224 13.070202 71.71875 13.21875 L 71.59375 14.25 C 70.281682 14.144367 69.813287 13.41854 68.375 13.40625 C 68.83471 13.250211 69.323842 13.131789 69.875 13.09375 z M 69.0625 23.25 C 68.691839 27.985499 65.945723 31.907263 64.8125 35.78125 C 65.409285 30.73015 67.681025 27.036587 69.0625 23.25 z" />
+        </svg>
+        <p>&nbsp;</p>
+        <p>برای دیدن آمار تفکیکی انتخاب کنید</p>
+    </div>
+    <div class="panel help search">
+        <svg version="1.1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" style="fill: #777; position: absolute; height: 64px; width: 64px; top: -10px; left: 30%;">
+            <path d="M 49.5 9.6875 C 48.346445 9.6188965 47.242187 10.179688 46.625 10.84375 C 46.6788 11.66995 46.1825 11.94005 46.375 12.90625 C 43.2825 15.92255 40.70505 20.5064 39.40625 24.5 C 39.14745 24.8426 38.72 25.02375 38.375 25.28125 C 37.6987 29.31885 35.2175 32.8788 33.5 36.625 C 34.6275 38.0652 36.1312 38.31125 38.375 37.65625 C 40.2662 32.41625 43.415 27.06 46.625 24 C 46.6788 48.0702 50.0375 66.98505 52.3125 90.21875 C 53.6762 90.98125 55.1688 92.0389 57.1875 91.75 C 57.6475 90.6762 57.06745 89.8074 57.96875 88.9375 C 52.97615 72.0824 52.695 54.90885 51 40.46875 C 50.8612 39.28755 51.29435 38.1163 51.28125 37.375 C 51.26005 36.3014 50.511 35.20125 50.5 34.03125 C 50.49 33.07505 51.021 31.9249 51 30.9375 C 50.8912 26.1161 50.6562 22.89255 51 19.09375 C 51.9762 18.18005 52.48125 16.81005 54.09375 16.53125 C 58.88115 22.65005 60.5 31.93625 65.4375 37.90625 C 66.5975 37.63745 67.2025 36.0451 67.75 36.625 C 64.5187 28.4889 61.7175 19.97625 57.1875 12.40625 C 55.5875 10.61495 52.63745 12.13125 51.53125 12.65625 C 52.16385 12.02375 51.33745 11.53745 51.53125 10.59375 C 50.906913 10.009688 50.192133 9.7286621 49.5 9.6875 z" />
+        </svg>
+        <p>&nbsp;</p>
+        <p>برای پیدا کردن محل، چند حرف از نام آن را تایپ کنید</p>
+    </div>
+    
+    <div class="panel special">
+        <a href="#pollutant=irregular">
+            <span class="value">۵۸۴ <span>تن</span></span>
+            <span>تولید پسماند ویژه در استان</span>
+        </a>
+    </div>
+    <div class="panel change">
+        <svg version="1.1"xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" preserveAspectRatio="xMidYMid" style="position: absolute; height: 100%; width: 100%">
+            <pattern id="bad" patternUnits="userSpaceOnUse" x="0" y="0" width="3" height="3">
+                <rect x="0" y="0" height="3" width="3" stroke="none" fill="#d54" />
+                <path d="M0,0 l3,3" stroke="#f76" stroke-width=".5" />
+            </pattern>
+            <pattern id="good" patternUnits="userSpaceOnUse" x="0" y="0" width="3" height="3">
+                <rect x="0" y="0" height="3" width="3" stroke="none" fill="#78a900" />
+                <path d="M0,0 l3,3" stroke="#BBD37F" stroke-width=".5" />
+            </pattern>
+
+            <rect x="50" y="25" height="28" width="90" fill="#d54" opacity=".75" />
+            <rect x="140" y="25" height="28" width="20" fill="url(#bad)" />
+            <rect x="50" y="60" height="28" width="130" fill="#78a900" />
+            <rect x="180" y="60" height="28" width="12" fill="url(#good)" opacity=".5" />
+            <rect x="50" y="95" height="28" width="100" fill="#777" />
+            <rect x="50" y="130" height="28" width="112" fill="#d54" opacity=".75" />
+            <rect x="162" y="130" height="28" width="4" fill="url(#bad)" />
+            <g style="font-size: 8px" direction="ltr" text-anchor="end" fill="#777">
+                <text x="45" y="41">بهداشتی-درمانی</text>
+                <text x="45" y="76">صنعتی-خدماتی</text>
+                <text x="45" y="111">کشاورزی</text>
+                <text x="45" y="146">مسکونی</text>
+            </g>
+        </svg>
+        <a href="#">
+            <span>
+                تغییرات نسبت به ماه گذشته
+            </span>
+        </a>
+    </div>
+    <div class="panel best">
+        <a href="#place=13">
+            <span class="value">۲۲۰ <span>کیلوگرم</span></span>
+            <span>
+                بیشترین کاهش پسماند ماه گذشته
+                <span>بیمارستان شهید بقایی</span>
+            </span>
+        </a>
+    </div>
+    <div class="panel worst">
+        <a href="#place=24">
+            <span class="value">۳/۵ <span>تن</span></span>
+            <span>
+                آلاینده‌ترین صنعت
+                <span data-bind="text: worst.name()"></span>
+            </span>
+        </a>
+    </div>
+    <div class="panel list">
+        <a href="#gotoList=1">
+            <svg version="1.1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+                <path d="M75.924,46H33.582l11.321-11.321c1.562-1.562,1.562-4.095,0-5.657c-1.562-1.562-4.095-1.562-5.657,0L21.097,47.171  c0,0,0,0,0,0c-0.186,0.186-0.352,0.392-0.499,0.611c-0.06,0.089-0.1,0.187-0.152,0.279c-0.075,0.135-0.156,0.266-0.216,0.41  c-0.048,0.117-0.074,0.238-0.111,0.358c-0.04,0.129-0.089,0.255-0.116,0.39c-0.04,0.204-0.054,0.411-0.062,0.618  c-0.002,0.055-0.016,0.106-0.016,0.162c0,0.062,0.016,0.12,0.018,0.181c0.009,0.2,0.021,0.4,0.061,0.598  c0.028,0.143,0.079,0.275,0.122,0.412c0.035,0.112,0.059,0.226,0.104,0.335c0.064,0.155,0.15,0.299,0.233,0.443  c0.046,0.081,0.081,0.167,0.133,0.246c0.148,0.223,0.317,0.43,0.506,0.618l18.144,18.144c0.781,0.781,1.805,1.172,2.829,1.172  s2.047-0.391,2.829-1.172c1.562-1.562,1.562-4.095,0-5.656L33.583,54h42.341c2.209,0,4-1.791,4-4S78.133,46,75.924,46z" />
+            </svg>
+            <span>مشاهده‌ی لیست و آمار</span>
+        </a>
+    </div>
+    <div class="panel new">
+        <a href="#" data-bind="click: newPlace">
+            <svg version="1.1" xmlns="http://www.w3.org/2000/svg" viewBox="-16 -16 96 96">
+                <path d="M56.14,28.375H35.274V7.506c0-1.809-1.462-3.271-3.274-3.271c-1.811,0-3.274,1.463-3.274,3.271v20.869H7.862 c-1.813,0-3.274,1.464-3.274,3.272c0,1.807,1.462,3.27,3.274,3.27h20.863v20.869c0,1.809,1.464,3.272,3.274,3.272 c1.813,0,3.274-1.464,3.274-3.272V34.918H56.14c1.811,0,3.272-1.463,3.272-3.27C59.412,29.839,57.95,28.375,56.14,28.375z" />
+            </svg>
+            <span>ثبت محل جدید</span>
+        </a>
+    </div>
+
+</div>
+                <!-- /ko -->
+            </div>
+
+            <div class="page list">
+                <!-- ko with: list -->
+                
+<nav>
+    <ul>
+        <li>
+            <a data-bind="attr: { href: $root.getViewUrl() }, css: { on: view() == null }, visible: groupBy()!=''">
+                <svg version="1.1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100.005">
+                    <path d="M62.391,12.995v45.772L30.146,91.13c7.275,5.433,16.113,8.875,25.775,8.875  C80.322,100.005,100,80.351,100,56.07C100,34.01,83.643,16.139,62.391,12.995z" />
+                    <path d="M42.939,60.623L11.664,29.371c-15.552,17.982-15.552,44.521,0,62.504L42.939,60.623z" />
+                    <path d="M49.994,50.051V0C36.37,0.842,24.066,6.055,14.13,14.18L49.994,50.051z" />
+                </svg>
+            </a>
+            <a data-bind="attr: { href: $root.getViewUrl() }, css: { on: view() == null }, visible: groupBy()==''">
+                <svg version="1.1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+                    <path d="M96.621,17.976H3.369C1.504,17.976,0,19.484,0,21.348v57.305c0,1.861,1.504,3.372,3.369,3.372h93.262  c1.867,0,3.369-1.511,3.369-3.372V21.348C100,19.484,98.492,17.976,96.621,17.976z M95.603,78.091H4.4V21.909h91.202V78.091z   M42.346,68.751h-31.25v-37.5h31.25V68.751z M88.342,52.345H47.717v-4.688h40.625V52.345z M88.342,60.548H47.717V55.86h40.625  V60.548z M88.342,68.751H47.717v-4.688h40.625V68.751z" />
+                </svg>
+            </a>
+        </li>
+        <li>
+            <a data-bind="attr: { href: $root.getViewUrl('bar') }, css: { on: view() == 'bar' }">
+                <svg version="1.1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+                    <rect x="37.5" y="25" width="25" height="75" />
+                    <rect x="75" width="25" height="100" />
+                    <rect y="50" width="25" height="50" />
+                </svg>
+            </a>
+        </li>
+        <li>
+            <a data-bind="attr: { href: $root.getViewUrl('map') }, css: { on: view() == 'map' }">
+                <svg version="1.1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+                    <path d="M85.638,61.117l3.344-26.365L64.995,25.65l-7.596,3.627c-0.234,1.16-0.59,2.289-1.055,3.375l5.75-2.746L59.72,55.459
+	                    l0.133,1.369l-17.52,2.643l-1.438,2.836l19.211-2.896l2.215,22.664l2.578-0.254l-2.229-22.795l0.225-0.035l20.086,2.545l0.049-0.393
+	                    l3.035,25.49l-20.918-4.828L37.927,86.99L37.7,86.947l2.447-23.25l-0.016-0.141l-0.1-0.871l-3.354-6.621l0.473,4.188l-0.598,0.09
+	                    l-19.404-3.006l0.115-0.955L14.29,32.941l13.576,5.732l-1.133-2.234c-0.367-0.475-0.699-0.973-1.014-1.48l-14.566-6.152l3.5,27.584
+	                    l-0.066,0.549l-0.049-0.008L14.14,59.49l0.143,0.021l-2.99,25.119l26.637,4.994l27.168-5.174l23.977,5.533L85.638,61.117z
+	                     M62.866,56.375l-0.447,0.066l-0.098-0.973l2.496-26.863l0.295-0.141l21.043,7.984l-2.857,22.514L62.866,56.375z M35.146,86.469
+	                    l-20.996-3.938l2.695-22.621l19.703,3.053l0.895-0.135l0.1,0.879L35.146,86.469z M40.368,63.348l-0.336-0.662l-0.027-0.244
+	                    l0.891-0.135L40.368,63.348z M28.747,34.225l11.441,22.578l11.316-22.336c2.223-2.592,3.574-5.951,3.574-9.627
+	                    c0-8.174-6.65-14.824-14.824-14.824s-14.822,6.65-14.822,14.824c0,3.559,1.262,6.826,3.359,9.385H28.747z M40.255,15.729
+	                    c5.023,0,9.111,4.088,9.111,9.111s-4.088,9.111-9.111,9.111s-9.111-4.088-9.111-9.111S35.231,15.729,40.255,15.729z" />
+                </svg>
+            </a>
+        </li>
+        <li>
+            <a data-bind="attr: { href: $root.getViewUrl('list') }, css: { on: view() == 'list' }">
+                <svg version="1.1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+                    <rect x="4" y="11.491" width="56" height="4.801" />
+                    <rect x="4" y="29.453" width="56" height="4.801" />
+                    <rect x="4" y="47.707" width="56" height="4.803" />
+                </svg>
+            </a>
+        </li>
+    </ul>
+</nav>
+
+<div class="content">
+
+    <div class="view overview" data-bind="fadeVisible: view() == null">
+        <div class="info" data-bind="fadeVisible: groupBy()=='', with: $root.header.pollutantFilter">
+            <div class="photo" data-bind="style: { 'background-image': 'url(images/pl_' + stateOfMatter() + '.jpg)' }"></div>
+            <div class="text">
+                <h3 data-bind="text: name"></h3>
+                <p>مقدار مجاز: <b style="direction: ltr; display: inline-block"><span data-bind="text: _norm"></span> <span data-bind="text: _unit"></span></b></p>
+                <p>توضیحات در مورد این پسماند:</p>
+                <ul>
+                    <li>چرا بده؟</li>
+                    <li>کجاها تولید میشه؟</li>
+                    <li>آیین‌نامه‌ها در موردش چی میگن؟</li>
+                    <li>چطور میشه مقدار تولیدش را کاهش داد؟</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <svg class="view" data-bind="fadeVisible: (view() == 'bar' || view() == 'map')"></svg>
+
+    <div class="view list" data-bind="fadeVisible: view() == 'list'">
+        <div style="position: absolute; top:16px; left: 16px; bottom: 16px; right: 16px; padding: 16px ; background: #fff">
+            <div style="overflow-y:auto; height: 100%">
+                <table>
+                    <thead>
+                        <tr data-bind="foreach: sortOptions">
+                            <th data-bind="text: name, style: { 'font-weight': $data == $parent.sortOrder() ? '700':'400' }, click: $parent.sortOrder"></th>
+                        </tr>
+                    </thead>
+
+                    <tbody data-bind="foreach: items">
+                        <tr data-bind="click: function(){ window.location.hash = $root.getPlaceUrl(place) }">
+                            <td><a data-bind="text: place.name, attr: { href: $root.getPlaceUrl(place) }"></a></td>
+                            <td data-bind="text: place.city().name"></td>
+                            <td data-bind="text: place.usage().name"></td>
+                            <td data-bind="text: Math.round(size*100)/100"></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+                <!-- /ko -->
+            </div>
+
+            <div class="page item">
+                <!-- ko with: place -->
+                
+<nav>
+    <ul>
+        <li>
+            <a data-bind="attr: { href: $root.getViewUrl() }, css: { on: view() == null }">
+                <svg version="1.1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+                    <path d="M96.621,17.976H3.369C1.504,17.976,0,19.484,0,21.348v57.305c0,1.861,1.504,3.372,3.369,3.372h93.262  c1.867,0,3.369-1.511,3.369-3.372V21.348C100,19.484,98.492,17.976,96.621,17.976z M95.603,78.091H4.4V21.909h91.202V78.091z   M42.346,68.751h-31.25v-37.5h31.25V68.751z M88.342,52.345H47.717v-4.688h40.625V52.345z M88.342,60.548H47.717V55.86h40.625  V60.548z M88.342,68.751H47.717v-4.688h40.625V68.751z" />
+                </svg>
+            </a>
+        </li>
+        <li>
+            <a data-bind="attr: { href: $root.getViewUrl('bar') }, css: { on: view() == 'bar' }">
+                <svg version="1.1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+                    <rect x="37.5" y="25" width="25" height="75" />
+                    <rect x="75" width="25" height="100" />
+                    <rect y="50" width="25" height="50" />
+                </svg>
+            </a>
+        </li>
+        <li>
+            <a data-bind="attr: { href: $root.getViewUrl('pie') }, css: { on: view() == 'pie' }">
+                <svg version="1.1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100.005">
+                    <path d="M62.391,12.995v45.772L30.146,91.13c7.275,5.433,16.113,8.875,25.775,8.875  C80.322,100.005,100,80.351,100,56.07C100,34.01,83.643,16.139,62.391,12.995z" />
+                    <path d="M42.939,60.623L11.664,29.371c-15.552,17.982-15.552,44.521,0,62.504L42.939,60.623z" />
+                    <path d="M49.994,50.051V0C36.37,0.842,24.066,6.055,14.13,14.18L49.994,50.051z" />
+                </svg>
+            </a>
+        </li>
+        <li>
+            <a data-bind="attr: { href: $root.getViewUrl('list') }, css: { on: view() == 'list' }">
+                <svg version="1.1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+                    <rect x="4" y="11.491" width="56" height="4.801" />
+                    <rect x="4" y="29.453" width="56" height="4.801" />
+                    <rect x="4" y="47.707" width="56" height="4.803" />
+                </svg>
+            </a>
+        </li>
+        <li>
+            <a data-bind="attr: { href: $root.getViewUrl('attachments') }, css: { on: view() == 'attachments' }">
+                <svg version="1.1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16.574 16.502">
+                    <path d="M13.402,9.853L7.038,3.489C5.979,2.432,4.649,2.343,3.724,3.268c-0.925,0.924-0.837,2.256,0.22,3.314l5.724,5.724 c0.195,0.195,0.512,0.195,0.707,0s0.195-0.512,0-0.707L4.651,5.875c-0.513-0.513-0.84-1.281-0.221-1.9
+                      c0.618-0.619,1.387-0.291,1.9,0.222l6.363,6.363c1.826,1.828,2.281,2.67,1.193,3.758c-1.1,1.099-2.266,0.826-4.021-0.928 l-7.07-7.073C1.653,5.175,0.853,3.31,2.354,1.81c1.782-1.782,3.817-0.03,4.397,0.551l6.496,6.498c0.194,0.195,0.512,0.195,0.707,0
+                      c0.194-0.195,0.194-0.512,0-0.708L7.458,1.654C5.494-0.31,3.267-0.52,1.646,1.103C0.008,2.74,0.185,5.12,2.088,7.024l7.071,7.071 c0.601,0.602,1.888,1.887,3.368,1.887c0.664,0,1.369-0.26,2.068-0.959C16.582,13.035,14.744,11.194,13.402,9.853z" />
+                </svg>
+            </a>
+        </li>
+    </ul>
+</nav>
+
+<h2 data-bind="text: active() && active().name"></h2>
+
+<div class="content">
+
+    <div class="view overview" data-bind="fadeVisible: view() == null">
+        <div class="info" data-bind="with: active">
+            <div class="photo" data-bind="style: { 'background-image': 'url(images/usg_' + usage().id + '.jpg)' }"></div>
+            <div class="text">
+                <h3 data-bind="content: name, attr: { contenteditable: $root.enableEditing }"></h3>
+                <p>
+                    <label>شهر <b data-bind="text: city().name"></b></label> <br />
+                    <label>نوع کاربری <b data-bind="text: usage().name"></b></label>
+                </p>
+                <p>
+                    <b data-bind="text: subType"></b> <br />
+                    <span data-bind="text: description"></span>
+                </p>
+                <p>
+                    <span data-bind="text: address"></span><br />
+                    <span data-bind="text: contact"></span>
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <svg class="view" data-bind="fadeVisible: (view() == 'bar' || view() == 'pie')"></svg>
+
+    <div class="view list" data-bind="fadeVisible: view() == 'list'" style="overflow-y: auto">
+        <div style="position: absolute; top:16px; left: 16px; bottom: 16px; right: 16px; padding: 16px ; background: #fff">
+            <div style="overflow-y:auto; height: 100%">
+                <table data-bind="with: active">
+                    <thead>
+                        <tr>
+                            <th colspan="2">نوع پسماند</th>
+                            <th>میزان مجاز</th>
+                            <th>مقدار ثبت شده</th>
+                            <th>واحد</th>
+                        </tr>
+                    </thead>
+
+                    <!-- ko foreach: pollutants -->
+                    <tbody>
+                        <tr>
+                            <th colspan="5" data-bind="text: pollutant.name()"></th>
+                        </tr>
+                        <!-- ko foreach: children -->
+                        <tr>
+                            <td data-bind="text: $parent.pollutant.name()"></td>
+                            <td data-bind="text: pollutant.name()"></td>
+                            <td data-bind="text: pollutant._norm()"></td>
+                            <td><div data-bind="content: quantity, css: { error: pollutant._norm() < quantity() }, attr: { contenteditable: $root.enableEditing }" style="font-weight: 700"></div></td>
+                            <td data-bind="text: pollutant._unit()"></td>
+                        </tr>
+                        <!-- /ko -->
+                    </tbody>
+                    <!-- /ko -->
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="view attachments" data-bind="fadeVisible: view() == 'attachments'">
+        <h3>ضمائم</h3>
+        <p>در اینجا ضمائم مربوط به این محل قرار داده می‌شود. از جمله:</p>
+        <ul>
+            <li>آیین‌نامه‌ها و ضوابطی که در مورد این محل باید رعایت شوند</li>
+            <li>عکس‌ها، گزارشات و اخبار مربوط به این محل</li>
+        </ul>
+    </div>
+
+</div>
+
+                <!-- /ko -->
+            </div>
+
+        </div>
+    </div>
+
+    <footer>
+    <p>&copy; اداره کل حفاظت محیط زیست استان. حق انتشار مطالب محفوظ می‌باشد. دوشنبه ۲ تیر ۱۳۹۳ ساعت ۲۱:۵۶:۳۹</p>
+    <nav>
+        <ol>
+            <li><a href="#">درباره‌ی سیستم</a></li>
+            <li><a href="#">راهنما</a></li>
+            <li><a href="#">تنظیمات</a></li>
+            <li><a href="#" data-bind="text: enableEditing() ? 'ختم ویرایش':'ویرایش', click: function() { enableEditing(!enableEditing()) }"></a></li>
+        </ol>
+    </nav>
+</footer>
+
+
+    <script src="js/data.js"></script>
+    <script src="js/app.js"></script>
+
+
+<!-- Visual Studio Browser Link -->
+<script type="application/json" id="__browserLink_initializationData">
+    {"appName":"Unknown","requestId":"e16f9c0cb7e64c059abd2b6fc204e11b"}
+</script>
+<script type="text/javascript" src="http://localhost:58377/d8f84cafcb0f40a5bba06f7b9f61d26f/browserLink" async="async"></script>
+<!-- End Browser Link -->
+
+</body>
+</html>
